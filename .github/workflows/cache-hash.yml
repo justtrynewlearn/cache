@@ -1,0 +1,42 @@
+name: Cache HashFiles
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  cache-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show requirements
+        run: |
+          echo "requirements.txt:"
+          cat requirements.txt
+
+      - name: Restore cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: cache-data
+          key: ${{ runner.os }}-dependencies-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Show cache information
+        run: |
+          echo "Cache hit: ${{ steps.cache.outputs.cache-hit }}"
+          echo "Cache key: ${{ runner.os }}-dependencies-${{ hashFiles('**/requirements.txt') }}"
+
+      - name: Create file if cache missed
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p cache-data
+          echo "Cache created for current requirements" > cache-data/info.txt
+          echo "New cache data created"
+
+      - name: Show cache data
+        run: |
+          echo "Cache data:"
+          cat cache-data/info.txt
