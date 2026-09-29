@@ -9,23 +9,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create test file
-        run: |
-          mkdir -p cache-data
-          echo "Hello from Cache" > cache-data/test.txt
-
-      - name: Show file before cache
-        run: |
-          echo "Before cache:"
-          cat cache-data/test.txt
-
-      - name: Save cache
+      - name: Restore cache
+        id: cache
         uses: actions/cache@v4
         with:
           path: cache-data
           key: cache-basic-v1
 
-      - name: Show file after cache
+      - name: Show cache status
         run: |
-          echo "After cache:"
+          echo "Cache hit: ${{ steps.cache.outputs.cache-hit }}"
+
+      - name: Check file
+        run: |
+          if [ -f cache-data/test.txt ]; then
+            echo "File was restored from cache:"
+            cat cache-data/test.txt
+          else
+            echo "File was NOT restored"
+          fi
+
+      - name: Create file if cache missed
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p cache-data
+          echo "Hello from Cache" > cache-data/test.txt
+          echo "File created because cache was missed"
+
+      - name: Show final file
+        run: |
+          echo "Final file:"
           cat cache-data/test.txt
